@@ -1,20 +1,37 @@
 #!/usr/bin/env node
-import * as cdk from 'aws-cdk-lib';
-import { TsLambdaExampleStack } from '../lib/ts-lambda-example-stack';
+import * as cdk from "aws-cdk-lib";
+import { Construct } from "constructs";
+import { TsLambdaExampleStack } from "../lib/ts-lambda-example-stack";
+
+const stages = ["dev", "prod"];
+const stage = process.env.STAGE || "dev";
+
+if (!stages.includes(stage)) {
+  throw new Error("Invalid STAGE");
+}
 
 const app = new cdk.App();
-new TsLambdaExampleStack(app, 'TsLambdaExampleStack', {
-  /* If you don't specify 'env', this stack will be environment-agnostic.
-   * Account/Region-dependent features and context lookups will not work,
-   * but a single synthesized template can be deployed anywhere. */
 
-  /* Uncomment the next line to specialize this stack for the AWS Account
-   * and Region that are implied by the current CLI configuration. */
-  // env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+const stageConfig = app.node.tryGetContext(stage);
 
-  /* Uncomment the next line if you know exactly what Account and Region you
-   * want to deploy the stack to. */
-  // env: { account: '123456789012', region: 'us-east-1' },
+export class AppStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+    new TsLambdaExampleStack(this, `LambdaStack`, {
+      ...props,
+      lambda: stageConfig.lambda,
+    });
+  }
+}
 
-  /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
-});
+export class AppStage extends cdk.Stage {
+  constructor(scope: Construct, id: string, props?: cdk.StageProps) {
+    super(scope, id, props);
+
+    new AppStack(this, `TsLambdaExample`, props);
+  }
+}
+
+for (const stage of stages) {
+  new AppStage(app, stage);
+}
