@@ -3,13 +3,13 @@
 default_stage := dev
 STAGE ?= $(default_stage)
 
-synth:
+synth: ## Synthesize CloudFormation template
 	STAGE=${STAGE} cdk synth "${STAGE}/**"
 
-deploy:
+deploy: ## Deploy CloudFormation stack
 	STAGE=${STAGE} cdk deploy "${STAGE}/**"
 
-remove:
+remove: ## Remove CloudFormation stack
 	STAGE=${STAGE} cdk destroy "${STAGE}/**"
 
 .PHONY: help
