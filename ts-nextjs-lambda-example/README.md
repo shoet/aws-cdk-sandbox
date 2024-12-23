@@ -35,3 +35,4 @@ $ npm run dev
 - Suspense
 - Mode を ResponseStreaming にする
 
+### (オプション) LambdaFunctionsURL + CloudFrontOAC

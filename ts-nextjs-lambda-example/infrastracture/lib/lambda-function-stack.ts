@@ -8,6 +8,8 @@ import {
 import { FunctionUrl } from "aws-cdk-lib/aws-lambda";
 
 export class LambdaFunctionStack extends cdk.Stack {
+  public readonly lambdaFunctionUrl: cdk.aws_lambda.FunctionUrl;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -26,9 +28,9 @@ export class LambdaFunctionStack extends cdk.Stack {
       lambdaProps
     );
 
-    new FunctionUrl(this, "NextJsLambdaFunctionUrl", {
+    this.lambdaFunctionUrl = new FunctionUrl(this, "NextJsLambdaFunctionUrl", {
       function: nextjsFunction,
-      authType: cdk.aws_lambda.FunctionUrlAuthType.NONE,
+      authType: cdk.aws_lambda.FunctionUrlAuthType.AWS_IAM,
       invokeMode: cdk.aws_lambda.InvokeMode.RESPONSE_STREAM,
     });
   }
