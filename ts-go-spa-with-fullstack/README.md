@@ -9,7 +9,7 @@
 
 # 構成図
 
-```marmaid
+```mermaid
 architecture-beta
 	group aws_cloud(cloud)[AWS Cloud]
 
