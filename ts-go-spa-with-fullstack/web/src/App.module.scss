@@ -1,0 +1,19 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.content {
+  margin: 0 auto;
+  min-width: 80%;
+  padding: 8px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card {
+  width: 100%;
+}

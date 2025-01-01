@@ -1,0 +1,19 @@
+.header {
+  padding: 1rem;
+
+  background-color: gray;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  align-items: center;
+}
+
+.appTitle {
+}
+
+.userProfile {
+  .userName {
+    font-size: 1.5rem;
+  }
+}
