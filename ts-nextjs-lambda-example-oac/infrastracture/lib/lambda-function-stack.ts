@@ -7,9 +7,12 @@ import {
 } from "aws-cdk-lib/aws-lambda";
 import { FunctionUrl } from "aws-cdk-lib/aws-lambda";
 
-export class LambdaFunctionStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+export class LambdaFunctionStack extends Construct {
+  public readonly function: cdk.aws_lambda.IFunction;
+  public readonly functionUrl: FunctionUrl;
+
+  constructor(scope: Construct, id: string) {
+    super(scope, id);
 
     const lambdaProps: DockerImageFunctionProps = {
       code: DockerImageCode.fromImageAsset("../application"),
@@ -20,20 +23,20 @@ export class LambdaFunctionStack extends cdk.Stack {
       },
     };
 
-    const nextjsFunction = new DockerImageFunction(
+    this.function = new DockerImageFunction(
       this,
       "NextJsLambdaFunction",
       lambdaProps
     );
 
-    const functionUrl = new FunctionUrl(this, "NextJsLambdaFunctionUrl", {
-      function: nextjsFunction,
-      authType: cdk.aws_lambda.FunctionUrlAuthType.NONE,
+    this.functionUrl = new FunctionUrl(this, "NextJsLambdaFunctionUrl", {
+      function: this.function,
+      authType: cdk.aws_lambda.FunctionUrlAuthType.AWS_IAM,
       invokeMode: cdk.aws_lambda.InvokeMode.RESPONSE_STREAM,
     });
 
     new cdk.CfnOutput(this, "NextJsLambdaFunctionUrl_url", {
-      value: functionUrl.url,
+      value: this.functionUrl.url,
     });
   }
 }
