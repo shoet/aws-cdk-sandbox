@@ -2,12 +2,14 @@ import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
 
 export class ECS extends Construct {
+  public readonly alb: cdk.aws_elasticloadbalancingv2.ApplicationLoadBalancer;
+
   constructor(
     scope: Construct,
     id: string,
     vpc: cdk.aws_ec2.Vpc,
     dynamodbTable: cdk.aws_dynamodb.Table,
-    props?: any
+    certificate: cdk.aws_certificatemanager.ICertificate
   ) {
     super(scope, id);
 
@@ -71,7 +73,7 @@ export class ECS extends Construct {
     );
 
     // ALB
-    const alb = new cdk.aws_elasticloadbalancingv2.ApplicationLoadBalancer(
+    this.alb = new cdk.aws_elasticloadbalancingv2.ApplicationLoadBalancer(
       scope,
       "ALB",
       {
@@ -83,14 +85,18 @@ export class ECS extends Construct {
       }
     );
 
-    // 80番で受ける
-    const listner = alb.addListener("ALBListner", {
-      port: 80,
+    // const httpListner = this.alb.addListener("ALBListner", {
+    //   port: 80,
+    //   open: true,
+    // });
+
+    const httpsListner = this.alb.addListener("ALBListnerHttps", {
+      port: 443,
       open: true,
+      certificates: [certificate],
     });
 
-    //
-    listner.addTargets("TargetListner", {
+    httpsListner.addTargets("TargetListner", {
       port: 3000,
       targets: [fargateService],
       healthCheck: {
