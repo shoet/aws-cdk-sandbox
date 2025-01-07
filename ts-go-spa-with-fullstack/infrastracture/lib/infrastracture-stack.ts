@@ -5,6 +5,8 @@ import { VPCStack, DynamoDB, ECS, S3Stack } from "./constructs";
 import { EnvironmentZodType } from "./constructs/types";
 import { ACM } from "./constructs/ACM";
 import { Route53 } from "./constructs/Route53";
+import { RDS } from "./constructs/RDS";
+import { EC2 } from "./constructs/EC2";
 
 export class NetworkStack extends cdk.Stack {
   public readonly vpcStack: VPCStack;
@@ -63,11 +65,33 @@ export class ServiceStack extends cdk.Stack {
 
 export class DatabaseStack extends cdk.Stack {
   public readonly ddb: DynamoDB;
+  public readonly rds: RDS;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    vpc: cdk.aws_ec2.Vpc,
+    bastionKeypairName?: string,
+    props?: cdk.StackProps
+  ) {
     super(scope, id, props);
 
     this.ddb = new DynamoDB(this, "Database");
+    this.rds = new RDS(this, "RDS", {
+      vpc: vpc,
+    });
+
+    if (bastionKeypairName) {
+      const bastion = new EC2(this, "EC2", {
+        vpc: vpc,
+        instanceKeyPairName: bastionKeypairName,
+      });
+
+      this.rds.instance.connections.allowFrom(
+        bastion.bastionInstance,
+        cdk.aws_ec2.Port.tcp(3306)
+      );
+    }
   }
 }
 
@@ -82,8 +106,13 @@ export class InfrastractureStack extends cdk.Stack {
       process.exit(1);
     }
 
-    const database = new DatabaseStack(this, "Database");
     const network = new NetworkStack(this, "Network");
+    const database = new DatabaseStack(
+      this,
+      "Database",
+      network.vpcStack.vpc,
+      parsedEnv.data.BASTION_INSTANCE_KEY_PAIR
+    );
 
     const acm = new ACM(this, "ACM", {
       certificateArn: parsedEnv.data.ACM_CERTIFICATE_ARN,

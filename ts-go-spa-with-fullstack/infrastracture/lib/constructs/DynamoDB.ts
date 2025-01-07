@@ -15,6 +15,7 @@ export class DynamoDB extends Construct {
         type: cdk.aws_dynamodb.AttributeType.NUMBER,
       },
       deletionProtection: false,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
   }
 }
