@@ -22,6 +22,11 @@ export class VPCStack extends Construct {
           name: "Private",
           subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
         },
+        {
+          cidrMask: 24,
+          name: "Isolated",
+          subnetType: cdk.aws_ec2.SubnetType.PRIVATE_ISOLATED,
+        },
       ],
     });
   }

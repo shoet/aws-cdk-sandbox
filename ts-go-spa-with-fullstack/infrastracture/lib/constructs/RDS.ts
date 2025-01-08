@@ -36,9 +36,10 @@ export class RDS extends Construct {
         publiclyAccessible: false,
         vpcSubnets: {
           onePerAz: true,
-          subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+          subnetType: cdk.aws_ec2.SubnetType.PRIVATE_ISOLATED,
         },
         port: 3306,
+        databaseName: "mydb",
         // バージョンを指定する
         engine: cdk.aws_rds.DatabaseInstanceEngine.mysql({
           version: cdk.aws_rds.MysqlEngineVersion.VER_8_0_40,
