@@ -2,6 +2,7 @@ import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as rds from "aws-cdk-lib/aws-rds";
 import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
+import { CDKResourceInitializer } from "./custom";
 
 interface Props {
   vpc: ec2.Vpc;
@@ -57,5 +58,17 @@ export class RDS extends Construct {
         deletionProtection: false,
       }
     );
+
+    const customResource = new CDKResourceInitializer(scope, "RDSInitializer", {
+      vpc: props.vpc,
+      function_timeout: cdk.Duration.minutes(2),
+      function_log_retention: cdk.aws_logs.RetentionDays.ONE_DAY,
+      function_security_groups: [this.instance.connections.securityGroups[0]],
+      subnets_selection: {
+        subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      },
+    });
+
+    customResource.function.node.addDependency(this.instance);
   }
 }
