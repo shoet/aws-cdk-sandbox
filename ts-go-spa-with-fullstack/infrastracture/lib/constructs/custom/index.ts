@@ -3,7 +3,7 @@ import * as cdk from "aws-cdk-lib";
 
 export interface CDKResourceInitializerProps {
   vpc: cdk.aws_ec2.IVpc;
-  // config: { credentials_secret_name: string };
+  config: { secretID: string };
   subnets_selection: cdk.aws_ec2.SubnetSelection;
   function_security_groups: cdk.aws_ec2.ISecurityGroup[];
   function_timeout: cdk.Duration;
@@ -59,13 +59,20 @@ export class CDKResourceInitializer extends Construct {
       functionProps
     );
 
+    this.function.addToRolePolicy(
+      new cdk.aws_iam.PolicyStatement({
+        resources: [props.config.secretID],
+        actions: ["secretsmanager:GetSecretValue"],
+      })
+    );
+
     const sdkCall: cdk.custom_resources.AwsSdkCall = {
       service: "Lambda",
       action: "invoke",
       parameters: {
         FunctionName: this.function.functionName,
         Payload: JSON.stringify({
-          testkey: "testvalue",
+          config: props.config,
         }),
       },
       physicalResourceId: cdk.custom_resources.PhysicalResourceId.of(

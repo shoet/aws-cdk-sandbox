@@ -67,6 +67,9 @@ export class RDS extends Construct {
       subnets_selection: {
         subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
+      config: {
+        secretID: this.credentials.secretArn,
+      },
     });
 
     customResource.function.node.addDependency(this.instance);
