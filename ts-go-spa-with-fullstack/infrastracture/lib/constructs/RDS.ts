@@ -72,6 +72,11 @@ export class RDS extends Construct {
       },
     });
 
+    this.instance.connections.allowFrom(
+      customResource.function,
+      cdk.aws_ec2.Port.tcp(3306)
+    );
+
     customResource.function.node.addDependency(this.instance);
   }
 }
