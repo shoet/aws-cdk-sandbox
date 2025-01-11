@@ -4,6 +4,7 @@ import {
 } from "@aws-sdk/client-secrets-manager";
 
 import mysql, { ConnectionOptions } from "mysql2/promise";
+import * as fs from "fs/promises";
 
 type Payload = {
   config: {
@@ -37,6 +38,11 @@ async function getSecrets(secretArn: string): Promise<DBConfig> {
   } catch (e) {
     throw new Error("Failed to parse secret");
   }
+}
+
+async function readQueryFile(path: string): Promise<string> {
+  const query = await fs.readFile(path, "utf8");
+  return query;
 }
 
 async function connectionDB(dbConfig: DBConfig): Promise<mysql.Connection> {
@@ -86,7 +92,18 @@ export async function handler(payload: Payload): Promise<any> {
     };
   }
 
-  console.log("Connected to DB");
+  try {
+    const query = await readQueryFile(`${__dirname}/init.sql`);
+    await conn.execute(query);
+  } catch (e) {
+    console.error("Failed to execute query", e);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        message: "Failed to execute query",
+      }),
+    };
+  }
 
   return {
     statusCode: 200,

@@ -9,6 +9,7 @@ export interface CDKResourceInitializerProps {
   function_timeout: cdk.Duration;
   function_memory_size?: number;
   function_log_retention: cdk.aws_logs.RetentionDays;
+  docker_image_platform?: string;
 }
 
 export class CDKResourceInitializer extends Construct {
@@ -37,27 +38,19 @@ export class CDKResourceInitializer extends Construct {
       }
     );
 
-    const functionProps: cdk.aws_lambda_nodejs.NodejsFunctionProps = {
-      entry: `${__dirname}/handler/index.ts`,
-      handler: "handler", // エクスポートした関数名
-      runtime: cdk.aws_lambda.Runtime.NODEJS_20_X, // ランタイム
-      memorySize: props.function_memory_size || 128,
-      functionName: `${id}-ResInit${stack.stackName}`,
+    this.function = new cdk.aws_lambda.DockerImageFunction(this, "Function", {
+      code: cdk.aws_lambda.DockerImageCode.fromImageAsset(`${__dirname}`, {}),
+      architecture: cdk.aws_lambda.Architecture.X86_64,
+      timeout: cdk.Duration.seconds(10),
+      functionName: `${id}-DBInit${stack.stackName}`,
       logRetention: props.function_log_retention,
       securityGroups: [
         function_security_group,
         ...props.function_security_groups,
       ],
-      timeout: props.function_timeout,
       vpc: props.vpc,
       vpcSubnets: props.vpc.selectSubnets(props.subnets_selection),
-    };
-
-    this.function = new cdk.aws_lambda_nodejs.NodejsFunction(
-      this,
-      "Function",
-      functionProps
-    );
+    });
 
     this.function.addToRolePolicy(
       new cdk.aws_iam.PolicyStatement({
@@ -92,9 +85,7 @@ export class CDKResourceInitializer extends Construct {
 
     customResourceFnRole.addToPolicy(
       new cdk.aws_iam.PolicyStatement({
-        resources: [
-          `arn:aws:lambda:${stack.region}:${stack.account}:function:*-ResInit${stack.stackName}`,
-        ],
+        resources: [this.function.functionArn],
         actions: ["lambda:InvokeFunction"],
       })
     );
@@ -107,6 +98,7 @@ export class CDKResourceInitializer extends Construct {
           resources: cdk.custom_resources.AwsCustomResourcePolicy.ANY_RESOURCE,
         }),
         onUpdate: sdkCall,
+        onCreate: sdkCall,
         timeout: cdk.Duration.minutes(10),
         role: customResourceFnRole,
       }
