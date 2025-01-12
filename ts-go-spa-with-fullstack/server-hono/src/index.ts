@@ -3,11 +3,24 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 
 import * as ddb from "@aws-sdk/client-dynamodb";
-import { TodoRepository } from "./repository/todo_repository.js";
+import {
+  ITodoRepository,
+  TodoRepository,
+} from "./repository/todo_repository.js";
+import { Config, getConfig } from "./config/index.js";
+import { DBConnectionOptions, MySQLClient } from "./repository/db_client.js";
 
+let config: Config;
+try {
+  config = getConfig();
+} catch (e) {
+  console.error("Failed to load configuration", e);
+  process.exit(1);
+}
 const app = new Hono();
 const ddbClient = new ddb.DynamoDBClient();
-const todoRepository: TodoRepository = new TodoRepository(ddbClient);
+const dbClient = new MySQLClient(DBConnectionOptions.fromConfig(config));
+const todoRepository: ITodoRepository = new TodoRepository(ddbClient, dbClient);
 
 app.use("/*", cors());
 
@@ -25,13 +38,13 @@ app.post("/", async (c) => {
     todo: { id: number; title: string; done: boolean };
   }>();
   const { id, title, done } = body.todo;
-  const newTodo = await todoRepository.createTodo({
+  await todoRepository.createTodo({
     id,
     title,
     done,
     createdAt: Math.floor(Date.now() / 1000),
   });
-  return c.json(newTodo);
+  return c.json({ status: "ok" });
 });
 
 const port = 3000;
