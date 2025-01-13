@@ -1,5 +1,9 @@
 import * as dotenv from "dotenv";
 import { z } from "zod";
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+} from "@aws-sdk/client-secrets-manager";
 
 export type Config = {
   db_host: string;
@@ -9,7 +13,7 @@ export type Config = {
   db_database: string;
 };
 
-const ConfigZodType = z.object({
+const DBConfigZodType = z.object({
   DB_HOST: z.string(),
   DB_PORT: z.string(),
   DB_USER: z.string(),
@@ -17,15 +21,30 @@ const ConfigZodType = z.object({
   DB_DATABASE: z.string(),
 });
 
-export function getConfig(): Config {
-  if (process.env.NODE_ENV != "production") {
+export async function getConfig(): Promise<Config> {
+  let dbConfig: any;
+
+  if (process.env.NODE_ENV == "production") {
+    const secretsID = process.env.DB_SECRETS_ID;
+    const secretsManager = new SecretsManagerClient();
+    const getCommand = new GetSecretValueCommand({
+      SecretId: secretsID,
+    });
+    const result = await secretsManager.send(getCommand);
+    if (result.SecretString == undefined) {
+      throw new Error("Failed to load secrets");
+    }
+    dbConfig = JSON.parse(result.SecretString);
+  } else {
     console.log("Loading .env file");
     const { error } = dotenv.config();
     if (error) {
       throw new Error("Failed to load .env file");
     }
+    dbConfig = process.env;
   }
-  const result = ConfigZodType.safeParse(process.env);
+
+  const result = DBConfigZodType.safeParse(dbConfig);
   if (!result.success) {
     console.log("Invalid configuration", result.error.format());
     throw new Error("Invalid configuration");

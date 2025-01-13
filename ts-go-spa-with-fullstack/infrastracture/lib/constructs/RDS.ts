@@ -11,22 +11,26 @@ interface Props {
 export class RDS extends Construct {
   public readonly instance: rds.DatabaseInstance;
 
+  public readonly credentialsSecretName: string;
   public readonly credentials: rds.DatabaseSecret;
+  public readonly crednetialsSecretArn: string;
 
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
 
     const instance_id = "my-sql-instance";
-    const credentials_secret_name = `${instance_id}-credentials`;
+    this.credentialsSecretName = `${instance_id}-credentials`;
 
     this.credentials = new cdk.aws_rds.DatabaseSecret(
       scope,
       "MySQLCredentials",
       {
-        secretName: credentials_secret_name,
+        secretName: this.credentialsSecretName,
         username: "admin",
       }
     );
+
+    this.crednetialsSecretArn = this.credentials.secretArn;
 
     this.instance = new cdk.aws_rds.DatabaseInstance(
       scope,

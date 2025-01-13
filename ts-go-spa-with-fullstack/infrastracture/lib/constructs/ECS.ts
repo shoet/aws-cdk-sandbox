@@ -3,18 +3,20 @@ import * as cdk from "aws-cdk-lib";
 
 export class ECS extends Construct {
   public readonly alb: cdk.aws_elasticloadbalancingv2.ApplicationLoadBalancer;
+  public readonly cluster: cdk.aws_ecs.Cluster;
 
   constructor(
     scope: Construct,
     id: string,
     vpc: cdk.aws_ec2.Vpc,
     dynamodbTable: cdk.aws_dynamodb.Table,
+    rdsSecretsID: string,
     certificate: cdk.aws_certificatemanager.ICertificate
   ) {
     super(scope, id);
 
     // ECSクラスターの作成
-    const cluster = new cdk.aws_ecs.Cluster(this, "ECSCluster", {
+    this.cluster = new cdk.aws_ecs.Cluster(this, "ECSCluster", {
       vpc: vpc,
     });
 
@@ -55,6 +57,9 @@ export class ECS extends Construct {
           hostPort: 3000,
         },
       ],
+      environment: {
+        DB_SECRETS_ID: rdsSecretsID,
+      },
     });
 
     // ECS Fargate
@@ -62,7 +67,7 @@ export class ECS extends Construct {
       this,
       "FargateService",
       {
-        cluster: cluster,
+        cluster: this.cluster,
         taskDefinition: taskDefinition,
         assignPublicIp: false,
         vpcSubnets: {
@@ -84,11 +89,6 @@ export class ECS extends Construct {
         internetFacing: true,
       }
     );
-
-    // const httpListner = this.alb.addListener("ALBListner", {
-    //   port: 80,
-    //   open: true,
-    // });
 
     const httpsListner = this.alb.addListener("ALBListnerHttps", {
       port: 443,

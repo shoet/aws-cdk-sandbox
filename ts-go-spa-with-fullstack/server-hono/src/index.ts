@@ -12,7 +12,7 @@ import { DBConnectionOptions, MySQLClient } from "./repository/db_client.js";
 
 let config: Config;
 try {
-  config = getConfig();
+  config = await getConfig();
 } catch (e) {
   console.error("Failed to load configuration", e);
   process.exit(1);

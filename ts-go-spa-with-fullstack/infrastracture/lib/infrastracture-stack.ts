@@ -49,6 +49,7 @@ export class ServiceStack extends cdk.Stack {
     id: string,
     vpc: cdk.aws_ec2.Vpc,
     ddb: DynamoDB,
+    rds: RDS,
     acm: ACM
   ) {
     super(scope, id);
@@ -58,6 +59,7 @@ export class ServiceStack extends cdk.Stack {
       "BackendService",
       vpc,
       ddb.table,
+      rds.crednetialsSecretArn,
       acm.certificate
     );
   }
@@ -122,7 +124,13 @@ export class InfrastractureStack extends cdk.Stack {
       "Service",
       network.vpcStack.vpc,
       database.ddb,
+      database.rds,
       acm
+    );
+    service.service.node.addDependency(database.rds.instance);
+    database.rds.instance.connections.allowFrom(
+      service.service.cluster,
+      cdk.aws_ec2.Port.tcp(3306)
     );
 
     new Route53Stack(this, "Route53Stack", {

@@ -21,6 +21,8 @@ COPY --from=builder --chown=hono:nodejs /app/node_modules /app/node_modules
 COPY --from=builder --chown=hono:nodejs /app/dist /app/dist
 COPY --from=builder --chown=hono:nodejs /app/package.json /app/package.json
 
+ENV NODE_ENV production
+
 USER hono
 EXPOSE 3000
 
