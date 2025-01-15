@@ -132,6 +132,12 @@ export class InfrastractureStack extends cdk.Stack {
       service.service.cluster,
       cdk.aws_ec2.Port.tcp(3306)
     );
+    service.service.taskDefinition.taskRole.addToPrincipalPolicy(
+      new cdk.aws_iam.PolicyStatement({
+        actions: ["secretsmanager:GetSecretValue"],
+        resources: [database.rds.crednetialsSecretArn],
+      })
+    );
 
     new Route53Stack(this, "Route53Stack", {
       hostedZoneId: parsedEnv.data.ROUTE53_HOSTED_ZONE_ID,

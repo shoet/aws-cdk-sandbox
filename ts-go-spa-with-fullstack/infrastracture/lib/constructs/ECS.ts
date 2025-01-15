@@ -4,6 +4,7 @@ import * as cdk from "aws-cdk-lib";
 export class ECS extends Construct {
   public readonly alb: cdk.aws_elasticloadbalancingv2.ApplicationLoadBalancer;
   public readonly cluster: cdk.aws_ecs.Cluster;
+  public readonly taskDefinition: cdk.aws_ecs.TaskDefinition;
 
   constructor(
     scope: Construct,
@@ -21,7 +22,7 @@ export class ECS extends Construct {
     });
 
     // タスク定義の作成
-    const taskDefinition = new cdk.aws_ecs.TaskDefinition(
+    this.taskDefinition = new cdk.aws_ecs.TaskDefinition(
       this,
       "TaskDefinition",
       {
@@ -32,7 +33,7 @@ export class ECS extends Construct {
     );
 
     // タスク定義にコンテナを追加
-    taskDefinition.addContainer("Backend", {
+    this.taskDefinition.addContainer("Backend", {
       image: cdk.aws_ecs.ContainerImage.fromDockerImageAsset(
         new cdk.aws_ecr_assets.DockerImageAsset(scope, "DockerImage", {
           directory: "../server-hono",
@@ -68,7 +69,7 @@ export class ECS extends Construct {
       "FargateService",
       {
         cluster: this.cluster,
-        taskDefinition: taskDefinition,
+        taskDefinition: this.taskDefinition,
         assignPublicIp: false,
         vpcSubnets: {
           subnetType: cdk.aws_ec2.SubnetType.PRIVATE_WITH_EGRESS,
@@ -106,6 +107,6 @@ export class ECS extends Construct {
       protocol: cdk.aws_elasticloadbalancingv2.ApplicationProtocol.HTTP,
     });
 
-    dynamodbTable.grantReadWriteData(taskDefinition.taskRole);
+    dynamodbTable.grantReadWriteData(this.taskDefinition.taskRole);
   }
 }

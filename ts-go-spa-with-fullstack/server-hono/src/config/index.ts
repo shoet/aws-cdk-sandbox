@@ -14,11 +14,11 @@ export type Config = {
 };
 
 const DBConfigZodType = z.object({
-  DB_HOST: z.string(),
-  DB_PORT: z.string(),
-  DB_USER: z.string(),
-  DB_PASSWORD: z.string(),
-  DB_DATABASE: z.string(),
+  host: z.string(),
+  port: z.number(),
+  username: z.string(),
+  password: z.string(),
+  dbname: z.string(),
 });
 
 export async function getConfig(): Promise<Config> {
@@ -50,10 +50,10 @@ export async function getConfig(): Promise<Config> {
     throw new Error("Invalid configuration");
   }
   return {
-    db_host: result.data.DB_HOST,
-    db_port: parseInt(result.data.DB_PORT),
-    db_user: result.data.DB_USER,
-    db_password: result.data.DB_PASSWORD,
-    db_database: result.data.DB_DATABASE,
+    db_host: result.data.host,
+    db_port: result.data.port,
+    db_user: result.data.username,
+    db_password: result.data.password,
+    db_database: result.data.dbname,
   };
 }
