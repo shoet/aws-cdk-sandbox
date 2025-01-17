@@ -6,14 +6,20 @@ import { CDKResourceInitializer } from "./custom";
 
 interface Props {
   vpc: ec2.Vpc;
+  instancePort?: number;
 }
 
+/**
+ * RDS は、RDSインスタンスを構築します。
+ * また、RDSインスタンスに対して、カスタムリソースを使用して、Lambda関数をデプロイし実行します。
+ */
 export class RDS extends Construct {
   public readonly instance: rds.DatabaseInstance;
 
   public readonly credentialsSecretName: string;
   public readonly credentials: rds.DatabaseSecret;
   public readonly crednetialsSecretArn: string;
+  public readonly instanceConnectionPort: number;
 
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
@@ -32,6 +38,8 @@ export class RDS extends Construct {
 
     this.crednetialsSecretArn = this.credentials.secretArn;
 
+    this.instanceConnectionPort = props.instancePort || 3306;
+
     this.instance = new cdk.aws_rds.DatabaseInstance(
       scope,
       "MySQL-RDS-Instance",
@@ -43,7 +51,7 @@ export class RDS extends Construct {
           onePerAz: true,
           subnetType: cdk.aws_ec2.SubnetType.PRIVATE_ISOLATED,
         },
-        port: 3306,
+        port: this.instanceConnectionPort,
         databaseName: "mydb",
         // バージョンを指定する
         engine: cdk.aws_rds.DatabaseInstanceEngine.mysql({
@@ -78,7 +86,7 @@ export class RDS extends Construct {
 
     this.instance.connections.allowFrom(
       customResource.function,
-      cdk.aws_ec2.Port.tcp(3306)
+      cdk.aws_ec2.Port.tcp(this.instanceConnectionPort)
     );
 
     customResource.function.node.addDependency(this.instance);

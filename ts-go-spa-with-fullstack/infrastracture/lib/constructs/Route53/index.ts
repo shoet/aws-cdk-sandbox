@@ -2,6 +2,7 @@ import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
 
 export class Route53 extends Construct {
+  public readonly hostedZone: cdk.aws_route53.IHostedZone;
   constructor(
     scope: Construct,
     id: string,
@@ -9,12 +10,11 @@ export class Route53 extends Construct {
       hostedZoneId: string;
       hostedZoneName: string;
       domainName: string;
-      loadBalancer: cdk.aws_elasticloadbalancingv2.ILoadBalancerV2;
     }
   ) {
     super(scope, id);
 
-    const hostedZone = cdk.aws_route53.HostedZone.fromHostedZoneAttributes(
+    this.hostedZone = cdk.aws_route53.HostedZone.fromHostedZoneAttributes(
       this,
       "HostedZone",
       {
@@ -22,15 +22,5 @@ export class Route53 extends Construct {
         zoneName: props.hostedZoneName,
       }
     );
-
-    const albAlias = cdk.aws_route53.RecordTarget.fromAlias(
-      new cdk.aws_route53_targets.LoadBalancerTarget(props.loadBalancer)
-    );
-
-    new cdk.aws_route53.ARecord(this, "ARecord", {
-      zone: hostedZone,
-      target: albAlias,
-      recordName: props.domainName,
-    });
   }
 }

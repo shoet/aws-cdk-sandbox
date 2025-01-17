@@ -19,7 +19,10 @@ try {
 }
 const app = new Hono();
 const ddbClient = new ddb.DynamoDBClient();
-const dbClient = new MySQLClient(DBConnectionOptions.fromConfig(config));
+const dbConfig = DBConnectionOptions.fromConfig(config);
+console.log("DB Config", dbConfig);
+const dbClient = new MySQLClient(dbConfig);
+await dbClient.ping();
 const todoRepository: ITodoRepository = new TodoRepository(ddbClient, dbClient);
 
 app.use("/*", cors());

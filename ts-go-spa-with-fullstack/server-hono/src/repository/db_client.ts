@@ -56,6 +56,12 @@ export class MySQLClient implements IDBClient {
     this.connectionOptions = connectionOptions;
   }
 
+  public async ping(): Promise<void> {
+    const options = this.connectionOptions.getMySQLConnectionOptions();
+    const conn = await mysql.createConnection(options);
+    await conn.ping();
+  }
+
   public async query<T>(query: string): Promise<T> {
     const options = this.connectionOptions.getMySQLConnectionOptions();
     const conn = await mysql.createConnection(options);

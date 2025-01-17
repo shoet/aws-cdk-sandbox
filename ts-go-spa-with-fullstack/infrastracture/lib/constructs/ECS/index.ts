@@ -1,27 +1,47 @@
 import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
 
+type Props = {
+  vpc: cdk.aws_ec2.Vpc;
+  rds: cdk.aws_rds.DatabaseInstance;
+  rdsSecretsID: string;
+  rdsConnectionPort: number;
+  acmCertificate: cdk.aws_certificatemanager.ICertificate;
+  domainName: string;
+  route53HostZone: cdk.aws_route53.IHostedZone;
+};
+
+/**
+ * ECSコンストラクタは、ECSクラスターにFargateサービスをデプロイし、ALBを構築します。
+ * また、ALBに対してRoute53のAレコードを作成します。
+ * RDSへの接続を許可します。
+ *
+ * @param scope
+ * @param id
+ * @param props Props
+ *  - vpc: cdk.aws_ec2.vpc
+ *  - rds: cdk.aws_rds.DatabaseInstance
+ *  - rdsSecretsID: string
+ *  - rdsConnectionPort: number
+ *  - acmCertificate: cdk.aws_certificatemanager.ICertificate
+ *  - domainName: string
+ *  - route53HostZone: cdk.aws_route53.IHostedZone
+ *  @returns ECS
+ */
 export class ECS extends Construct {
   public readonly alb: cdk.aws_elasticloadbalancingv2.ApplicationLoadBalancer;
   public readonly cluster: cdk.aws_ecs.Cluster;
   public readonly taskDefinition: cdk.aws_ecs.TaskDefinition;
 
-  constructor(
-    scope: Construct,
-    id: string,
-    vpc: cdk.aws_ec2.Vpc,
-    dynamodbTable: cdk.aws_dynamodb.Table,
-    rdsSecretsID: string,
-    certificate: cdk.aws_certificatemanager.ICertificate
-  ) {
+  constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
 
-    // ECSクラスターの作成
+    // ECS Cluster
     this.cluster = new cdk.aws_ecs.Cluster(this, "ECSCluster", {
-      vpc: vpc,
+      vpc: props.vpc,
     });
 
-    // タスク定義の作成
+    // ECS TaskDefinition
     this.taskDefinition = new cdk.aws_ecs.TaskDefinition(
       this,
       "TaskDefinition",
@@ -32,7 +52,7 @@ export class ECS extends Construct {
       }
     );
 
-    // タスク定義にコンテナを追加
+    // ECS Container
     this.taskDefinition.addContainer("Backend", {
       image: cdk.aws_ecs.ContainerImage.fromDockerImageAsset(
         new cdk.aws_ecr_assets.DockerImageAsset(scope, "DockerImage", {
@@ -45,7 +65,6 @@ export class ECS extends Construct {
         streamPrefix: "ecs",
       }),
       healthCheck: {
-        // command: ["curl", "http://localhost:3000/health"],
         command: [
           "CMD-SHELL",
           "curl -f http://localhost:3000/health || exit 1",
@@ -59,11 +78,11 @@ export class ECS extends Construct {
         },
       ],
       environment: {
-        DB_SECRETS_ID: rdsSecretsID,
+        DB_SECRETS_ID: props.rdsSecretsID,
       },
     });
 
-    // ECS Fargate
+    // ECS Fargate Service
     const fargateService = new cdk.aws_ecs.FargateService(
       this,
       "FargateService",
@@ -78,12 +97,18 @@ export class ECS extends Construct {
       }
     );
 
+    // RDS Allow Connection from ECS
+    props.rds.connections.allowFrom(
+      this.cluster,
+      cdk.aws_ec2.Port.tcp(props.rdsConnectionPort)
+    );
+
     // ALB
     this.alb = new cdk.aws_elasticloadbalancingv2.ApplicationLoadBalancer(
       scope,
       "ALB",
       {
-        vpc: vpc,
+        vpc: props.vpc,
         vpcSubnets: {
           subnetType: cdk.aws_ec2.SubnetType.PUBLIC,
         },
@@ -91,12 +116,14 @@ export class ECS extends Construct {
       }
     );
 
+    // ALB Listner
     const httpsListner = this.alb.addListener("ALBListnerHttps", {
       port: 443,
       open: true,
-      certificates: [certificate],
+      certificates: [props.acmCertificate],
     });
 
+    // ALB Listner Target
     httpsListner.addTargets("TargetListner", {
       port: 3000,
       targets: [fargateService],
@@ -107,6 +134,16 @@ export class ECS extends Construct {
       protocol: cdk.aws_elasticloadbalancingv2.ApplicationProtocol.HTTP,
     });
 
-    dynamodbTable.grantReadWriteData(this.taskDefinition.taskRole);
+    // Route53 ARecord Target
+    const albAlias = cdk.aws_route53.RecordTarget.fromAlias(
+      new cdk.aws_route53_targets.LoadBalancerTarget(this.alb)
+    );
+
+    // Route53 ARecord
+    new cdk.aws_route53.ARecord(this, "ARecord", {
+      zone: props.route53HostZone,
+      target: albAlias,
+      recordName: props.domainName,
+    });
   }
 }

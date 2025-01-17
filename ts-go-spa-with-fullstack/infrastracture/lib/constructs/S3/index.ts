@@ -1,7 +1,7 @@
 import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
 
-export class S3Stack extends cdk.Stack {
+export class S3 extends cdk.Stack {
   public readonly bucket: cdk.aws_s3.Bucket;
   constructor(scope: Construct, id: string) {
     super(scope, id);

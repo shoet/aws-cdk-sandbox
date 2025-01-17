@@ -5,6 +5,7 @@
     "infrastracture": "bin/infrastracture.js"
   },
   "scripts": {
+    "build:frontend": "cd ../server-hono && npm install && npm run build",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
