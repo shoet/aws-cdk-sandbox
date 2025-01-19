@@ -61,6 +61,7 @@ export class InfraStack extends cdk.Stack {
 
 export class BackendStack extends cdk.Stack {
   public readonly service: ECS;
+  public readonly backendDomain: string;
 
   constructor(
     scope: Construct,
@@ -96,18 +97,24 @@ export class BackendStack extends cdk.Stack {
       props.rds.instance,
       cdk.aws_ec2.Port.tcp(props.rds.instanceConnectionPort)
     );
+
+    this.backendDomain = props.domainName;
   }
 }
 
 export class FrontendStack extends cdk.Stack {
-  // new S3Stack(this, "WebBucket");
+  constructor(scope: Construct, id: string, props: cdk.StackProps) {
+    super(scope, id);
+
+    new S3(this, "WebBucket");
+  }
 }
 
 export class MainStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    dotenv.config();
+    dotenv.config({ path: "../.env" });
     const parsedEnv = EnvironmentZodType.safeParse(process.env);
     if (!parsedEnv.success) {
       console.error("Invalid environment variables", parsedEnv.error.format());

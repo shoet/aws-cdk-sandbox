@@ -7,3 +7,5 @@ export const EnvironmentZodType = z.object({
   ACM_CERTIFICATE_ARN: z.string().nonempty(),
   BASTION_INSTANCE_KEY_PAIR: z.string().nonempty(),
 });
+
+export type Config = z.infer<typeof EnvironmentZodType>;

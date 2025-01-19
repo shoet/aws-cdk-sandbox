@@ -22,8 +22,8 @@ export class S3 extends cdk.Stack {
       destinationBucket: this.bucket,
     });
 
-    new cdk.CfnOutput(this, "WebBucketOutput", {
-      value: this.bucket.bucketName,
+    new cdk.CfnOutput(this, "WebSiteURL", {
+      value: this.bucket.bucketWebsiteUrl,
     });
   }
 }

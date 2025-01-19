@@ -8,7 +8,9 @@ export const useTodoList = () => {
   const [isError, setIsError] = useState(false);
 
   const getTodoList = async () => {
-    const todos: Todo[] = await fetch(getAPIURL("/"))
+    const todos: Todo[] = await fetch(getAPIURL("/"), {
+      headers: { "Content-Type": "application/json" },
+    })
       .then(handleSuccess)
       .catch((error: unknown) => {
         setIsError(true);
