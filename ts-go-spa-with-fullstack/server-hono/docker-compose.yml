@@ -1,0 +1,17 @@
+services:
+  db:
+    container_name: db
+    image: mysql:8.0.33
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:

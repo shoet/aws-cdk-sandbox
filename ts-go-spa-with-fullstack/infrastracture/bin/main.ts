@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
-import { InfrastractureStack } from "../lib/infrastracture-stack";
+import { MainStack } from "../lib/main-stack";
 
 const app = new cdk.App();
-new InfrastractureStack(app, "TsGoWithFullstack", {
+new MainStack(app, "FullstackAppExample", {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */

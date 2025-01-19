@@ -1,7 +1,10 @@
 import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
 
-export class VPCStack extends Construct {
+/**
+ * VPC は、パブリックサブネット、プライベートサブネット、アイソレートサブネットを持つVPCを構築します。
+ */
+export class VPC extends Construct {
   public readonly vpc: cdk.aws_ec2.Vpc;
 
   constructor(scope: Construct, id: string, props?: any) {
@@ -10,7 +13,6 @@ export class VPCStack extends Construct {
     this.vpc = new cdk.aws_ec2.Vpc(scope, "VPC", {
       maxAzs: 2,
       createInternetGateway: true,
-      // natGateways: 1,
       subnetConfiguration: [
         {
           cidrMask: 24,
