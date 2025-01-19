@@ -32,6 +32,7 @@ export class ECS extends Construct {
   public readonly alb: cdk.aws_elasticloadbalancingv2.ApplicationLoadBalancer;
   public readonly cluster: cdk.aws_ecs.Cluster;
   public readonly taskDefinition: cdk.aws_ecs.TaskDefinition;
+  public readonly fargateService: cdk.aws_ecs.FargateService;
 
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
@@ -83,7 +84,7 @@ export class ECS extends Construct {
     });
 
     // ECS Fargate Service
-    const fargateService = new cdk.aws_ecs.FargateService(
+    this.fargateService = new cdk.aws_ecs.FargateService(
       this,
       "FargateService",
       {
@@ -95,12 +96,6 @@ export class ECS extends Construct {
         },
         enableExecuteCommand: true, // ECS Execを有効にする
       }
-    );
-
-    // RDS Allow Connection from ECS
-    props.rds.connections.allowFrom(
-      this.cluster,
-      cdk.aws_ec2.Port.tcp(props.rdsConnectionPort)
     );
 
     // ALB
@@ -126,7 +121,7 @@ export class ECS extends Construct {
     // ALB Listner Target
     httpsListner.addTargets("TargetListner", {
       port: 3000,
-      targets: [fargateService],
+      targets: [this.fargateService],
       healthCheck: {
         path: "/health",
         port: "traffic-port",

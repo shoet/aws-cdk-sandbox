@@ -85,12 +85,16 @@ export class BackendStack extends cdk.Stack {
       rdsConnectionPort: props.rds.instanceConnectionPort,
     });
 
-    this.service.node.addDependency(props.rds.instance);
     this.service.taskDefinition.taskRole.addToPrincipalPolicy(
       new cdk.aws_iam.PolicyStatement({
         actions: ["secretsmanager:GetSecretValue"],
         resources: [props.rds.crednetialsSecretArn],
       })
+    );
+
+    this.service.fargateService.connections.allowTo(
+      props.rds.instance,
+      cdk.aws_ec2.Port.tcp(props.rds.instanceConnectionPort)
     );
   }
 }
