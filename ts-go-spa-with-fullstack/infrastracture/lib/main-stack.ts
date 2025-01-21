@@ -1,4 +1,3 @@
-import * as dotenv from "dotenv";
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { ECS, VPC, RDS, ACM, Route53, S3 } from "./constructs";
@@ -15,6 +14,7 @@ export class InfraStack extends cdk.Stack {
     scope: Construct,
     id: string,
     props: cdk.StackProps & {
+      vpcCidr: string;
       route53Props: {
         domainName: string;
         hostedZoneId: string;
@@ -27,7 +27,7 @@ export class InfraStack extends cdk.Stack {
     super(scope, id, props);
 
     // create network
-    this.vpc = new VPC(this, "Network");
+    this.vpc = new VPC(this, "Network", { cidr: props.vpcCidr });
 
     // create database
     this.rds = new RDS(this, "Database", {
@@ -99,6 +99,10 @@ export class BackendStack extends cdk.Stack {
     );
 
     this.backendDomain = props.domainName;
+
+    new cdk.CfnOutput(this, "BackendServiceURL", {
+      value: `https://${this.backendDomain}`,
+    });
   }
 }
 
@@ -114,7 +118,6 @@ export class MainStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    dotenv.config({ path: "../.env" });
     const parsedEnv = EnvironmentZodType.safeParse(process.env);
     if (!parsedEnv.success) {
       console.error("Invalid environment variables", parsedEnv.error.format());
@@ -122,6 +125,7 @@ export class MainStack extends cdk.Stack {
     }
 
     const infrastractureStack = new InfraStack(this, "InfraStack", {
+      vpcCidr: parsedEnv.data.VPC_CIDR,
       route53Props: {
         domainName: parsedEnv.data.BACKEND_DOMAIN_NAME,
         hostedZoneId: parsedEnv.data.ROUTE53_HOSTED_ZONE_ID,

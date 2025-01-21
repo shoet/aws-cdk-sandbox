@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const EnvironmentZodType = z.object({
+  VPC_CIDR: z.string().nonempty(),
   ROUTE53_HOSTED_ZONE_ID: z.string().nonempty(),
   ROUTE53_HOSTED_ZONE_NAME: z.string().nonempty(),
   BACKEND_DOMAIN_NAME: z.string().nonempty(),

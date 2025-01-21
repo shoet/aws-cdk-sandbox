@@ -1,9 +1,17 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
 import { MainStack } from "../lib/main-stack";
+import * as dotenv from "dotenv";
 
 const app = new cdk.App();
-new MainStack(app, "FullstackAppExample", {
+
+dotenv.config({ path: process.env.DOTENV_PATH });
+const stage = process.env.STAGE;
+if (!stage) {
+  throw new Error("Missing environment variable STAGE");
+}
+
+new MainStack(app, `FullstackAppExample-${stage}`, {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */
